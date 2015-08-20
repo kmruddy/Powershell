@@ -26,6 +26,7 @@ function Get-NSXController {
 
 	Process {
 
+	if (!("trustallcertspolicy" -as [type])) {
 	### Ignore TLS/SSL errors	
 	add-type @"
 	    using System.Net;
@@ -39,6 +40,7 @@ function Get-NSXController {
 	    }
 "@
 	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
 
 	### Create authorization string and store in $head
 	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
@@ -98,6 +100,7 @@ function Get-NSXEdges {
 
 	Process {
 
+	if (!("trustallcertspolicy" -as [type])) {
 	### Ignore TLS/SSL errors	
 	add-type @"
 	    using System.Net;
@@ -111,6 +114,7 @@ function Get-NSXEdges {
 	    }
 "@
 	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
 
 	### Create authorization string and store in $head
 	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
@@ -175,6 +179,7 @@ function Get-NSXEdgeInterfaces {
 
 	Process {
 
+	if (!("trustallcertspolicy" -as [type])) {
 	### Ignore TLS/SSL errors	
 	add-type @"
 	    using System.Net;
@@ -188,6 +193,7 @@ function Get-NSXEdgeInterfaces {
 	    }
 "@
 	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
 
 	### Create authorization string and store in $head
 	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
@@ -251,6 +257,7 @@ function Get-NSXEdgeUplinks {
 
 	Process {
 
+	if (!("trustallcertspolicy" -as [type])) {
 	### Ignore TLS/SSL errors	
 	add-type @"
 	    using System.Net;
@@ -264,6 +271,7 @@ function Get-NSXEdgeUplinks {
 	    }
 "@
 	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
 
 	### Create authorization string and store in $head
 	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
@@ -342,6 +350,7 @@ function Get-NSXEdgeNATs {
 
 	Process {
 
+	if (!("trustallcertspolicy" -as [type])) {
 	### Ignore TLS/SSL errors	
 	add-type @"
 	    using System.Net;
@@ -355,6 +364,7 @@ function Get-NSXEdgeNATs {
 	    }
 "@
 	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
 
 	### Create authorization string and store in $head
 	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
@@ -402,7 +412,7 @@ function Get-NSXEdgeNATs {
 		$global:nreport += $n
 		$count ++
 		}
-	$global:nreport | ft -AutoSize
+	$global:nreport
 
 	} # End of process
 } # End of function
