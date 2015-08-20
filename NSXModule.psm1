@@ -412,7 +412,7 @@ function Get-NSXEdgeNATs {
 		$global:nreport += $n
 		$count ++
 		}
-	$global:nreport
+	$global:nreport | ft -autosize
 
 	} # End of process
 } # End of function
