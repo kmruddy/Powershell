@@ -53,20 +53,20 @@ function Get-NSXController {
 	[xml]$rxml = $r.Content
 	
 	### Return the NSX Controllers
-	$global:nreport = @()
+	$creport = @()
 	foreach ($controller in $rxml.controllers.controller)
 		{
-		$n = @{} | select Name,IP,Status,Version,VMName,Host,Datastore
-		$n.Name = $controller.id
-		$n.IP = $controller.ipAddress
-		$n.Status = $controller.status
-		$n.Version = $controller.version
-		$n.VMName = $controller.virtualMachineInfo.name
-		$n.Host = $controller.hostInfo.name
-		$n.Datastore = $controller.datastoreInfo.name
-		$global:nreport += $n
+		$c = New-Object System.Object
+		$c | Add-Member -Type NoteProperty -Name Name -Value $controller.id
+		$c | Add-Member -Type NoteProperty -Name IP -Value $controller.ipAddress
+		$c | Add-Member -Type NoteProperty -Name Status -Value $controller.status
+		$c | Add-Member -Type NoteProperty -Name Version -Value $controller.version
+		$c | Add-Member -Type NoteProperty -Name VMName -Value $controller.virtualMachineInfo.name
+		$c | Add-Member -Type NoteProperty -Name Host -Value $controller.hostInfo.name
+		$c | Add-Member -Type NoteProperty -Name Datastore -Value $controller.datastoreInfo.name
+		$creport += $c
 		}
-	$global:nreport | ft -AutoSize
+	return $creport
 
 	} # End of process
 } # End of function
@@ -127,20 +127,20 @@ function Get-NSXEdges {
 	[xml]$rxml = $r.Content
 	
 	### Return the NSX Edge Nodes
-	$global:nreport = @()
+	$ereport = @()
 	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
 		{
-		$e = @{} | select ID,Name,Status,Version,State,Tenant,Size
-		$e.ID = $edge.id
-		$e.Name = $edge.name
-		$e.Status = $edge.edgeStatus
-		$e.Version = $edge.appliancesSummary.vmVersion
-		$e.State = $edge.state
-		$e.Tenant = $edge.tenantId
-		$e.Size = $edge.appliancesSummary.applianceSize
-		$global:nreport += $e
+		$e = New-Object System.Object
+		$e | Add-Member -Type NoteProperty -Name ID -Value $edge.id
+		$e | Add-Member -Type NoteProperty -Name Name -Value $edge.name
+		$e | Add-Member -Type NoteProperty -Name Status -Value $edge.edgeStatus
+		$e | Add-Member -Type NoteProperty -Name Version -Value $edge.appliancesSummary.vmVersion
+		$e | Add-Member -Type NoteProperty -Name State -Value $edge.state
+		$e | Add-Member -Type NoteProperty -Name Tenant -Value $edge.tenantId
+		$e | Add-Member -Type NoteProperty -Name Size -Value $edge.appliancesSummary.applianceSize
+		$ereport += $e
 		}
-	$global:nreport | ft -AutoSize
+	return $ereport
 
 	} # End of process
 } # End of function
@@ -206,22 +206,22 @@ function Get-NSXEdgeInterfaces {
 	[xml]$rxml = $r.Content
 	
 	### Return the NSX Edge Node's Interfaces
-	$global:nreport = @()
+	$vreport = @()
 	foreach ($vnic in $rxml.edge.vnics.vnic)
 		{
-		$v = @{} | select Number,Name,IP,Prefix,ConnectedToPG,Type,Status
-		$v.Number = $vnic.label.Split("_")[1]
-		$v.Name = $vnic.name
-		$v.IP = $vnic.addressGroups.addressGroup.primaryAddress
-		$v.Prefix = $vnic.addressGroups.addressGroup.subnetPrefixLength
-		$v.ConnectedToPG = $vnic.portgroupName
-		$v.Type = $vnic.type
-		if ($vnic.isConnected -eq $true) {$v.Status = "Connected"}
-		elseif ($vnic.isConnected -eq $false) {$v.Status = "Disconnected"}
-		else {$v.Status = "Not Found"}
-		$global:nreport += $v
+		$v = New-Object System.Object
+		$v | Add-Member -Type NoteProperty -Name Number -Value $vnic.label.Split("_")[1]
+		$v | Add-Member -Type NoteProperty -Name Name -Value $vnic.name
+		$v | Add-Member -Type NoteProperty -Name IP -Value $vnic.addressGroups.addressGroup.primaryAddress
+		$v | Add-Member -Type NoteProperty -Name Prefix -Value $vnic.addressGroups.addressGroup.subnetPrefixLength
+		$v | Add-Member -Type NoteProperty -Name ConnectedToPG -Value $vnic.portgroupName
+		$v | Add-Member -Type NoteProperty -Name Type -Value $vnic.type
+		if ($vnic.isConnected -eq $true) {$v | Add-Member -Type NoteProperty -Name Status -Value "Connected"}
+		elseif ($vnic.isConnected -eq $false) {$v | Add-Member -Type NoteProperty -Name Status -Value "Disconnected"}
+		else {$v | Add-Member -Type NoteProperty -Name Status -Value "Not Found"}
+		$vreport += $v
 		}
-	$global:nreport | ft -AutoSize
+	$vreport
 
 	} # End of process
 } # End of function
@@ -284,13 +284,13 @@ function Get-NSXEdgeUplinks {
 	[xml]$rxml = $r.Content
 	
 	### Return the NSX Edge Nodes' Uplinks
-	$global:nreport = @()
+	$ureport = @()
 	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
 		{
-		$u = @{} | select EdgeID,EdgeName,Number,Name,IP,Prefix,ConnectedToPG,Type
+		$u = New-Object System.Object
 		$Edgeid = $edge.id
-		$u.EdgeID = $Edgeid
-		$u.EdgeName = $edge.name
+		$u | Add-Member -Type NoteProperty -Name EdgeID -Value $Edgeid
+		$u | Add-Member -Type NoteProperty -Name EdgeName -Value $edge.name
 		
 		### Connect to NSX Manager via API to pull the Edge Node's Uplinks
 		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
@@ -301,18 +301,18 @@ function Get-NSXEdgeUplinks {
 			{
 			if ($vnic.type -eq "uplink") 
 				{
-				$u.Number = $vnic.label.Split("_")[1]
-				$u.Name = $vnic.name
-				$u.IP = $vnic.addressGroups.addressGroup.primaryAddress
-				$u.Prefix = $vnic.addressGroups.addressGroup.subnetPrefixLength
-				$u.ConnectedToPG = $vnic.portgroupName
-				$u.Type = $vnic.type
-				$global:nreport += $u
+				$u | Add-Member -Type NoteProperty -Name Number -Value $vnic.label.Split("_")[1]
+				$u | Add-Member -Type NoteProperty -Name Name -Value $vnic.name
+				$u | Add-Member -Type NoteProperty -Name IP -Value $vnic.addressGroups.addressGroup.primaryAddress
+				$u | Add-Member -Type NoteProperty -Name Prefix -Value $vnic.addressGroups.addressGroup.subnetPrefixLength
+				$u | Add-Member -Type NoteProperty -Name ConnectedToPG -Value $vnic.portgroupName
+				$u | Add-Member -Type NoteProperty -Name Type -Value $vnic.type
+				$ureport += $u
 				}
 						
 			}
 		}
-	$global:nreport | ft -AutoSize
+	$ureport
 
 	} # End of process
 } # End of function
@@ -377,26 +377,26 @@ function Get-NSXEdgeNATs {
 	[xml]$rxml = $r.Content
 	
 	### Return the NSX Controllers
-	$global:nreport = @()
+	$nreport = @()
 	$count = 1
 	foreach ($nat in $rxml.nat.natRules.natRule)
 		{
-		$n = @{} | select Order,ID,Type,Action,AppliedOn,OriginalIP,OriginalPort,TranslatedIP,TranslatedPort,Protocol,Status,Logging,Description
-		$n.Order = $count
-		$n.ID = $nat.ruleId
-		$n.Type = $nat.ruleType
-		$n.Action = $nat.action
-		$n.OriginalIP = $nat.originalAddress
-		$n.OriginalPort = $nat.originalPort
-		$n.TranslatedIP = $nat.translatedAddress
-		$n.TranslatedPort = $nat.translatedPort
-		$n.Protocol = $nat.protocol
-		if ($nat.enabled -eq $true) {$n.Status = "Enabled"}
-		elseif ($nat.enabled -eq $false) {$n.Status = "Not Enabled"}
-		else {$n.Status = "Not Found"}
-		$n.Logging = $nat.loggingEnabled
-		if ($nat.description) {$n.Description}
-		else {$n.Description = $null}
+		$n = New-Object System.Object
+		$n | Add-Member -Type NoteProperty -Name Order -Value $count
+		$n | Add-Member -Type NoteProperty -Name ID -Value $nat.ruleId
+		$n | Add-Member -Type NoteProperty -Name Type -Value $nat.ruleType
+		$n | Add-Member -Type NoteProperty -Name Action -Value $nat.action
+		$n | Add-Member -Type NoteProperty -Name OriginalIP -Value $nat.originalAddress
+		$n | Add-Member -Type NoteProperty -Name OriginalPort -Value $nat.originalPort
+		$n | Add-Member -Type NoteProperty -Name TranslatedIP -Value $nat.translatedAddress
+		$n | Add-Member -Type NoteProperty -Name TranslatedPort -Value $nat.translatedPort
+		$n | Add-Member -Type NoteProperty -Name Protocol -Value $nat.protocol
+		if ($nat.enabled -eq $true) {$n | Add-Member -Type NoteProperty -Name Status -Value "Enabled"}
+		elseif ($nat.enabled -eq $false) {$n | Add-Member -Type NoteProperty -Name Status -Value "Not Enabled"}
+		else {$n | Add-Member -Type NoteProperty -Name Status -Value "Not Found"}
+		$n | Add-Member -Type NoteProperty -Name Logging -Value $nat.loggingEnabled
+		if ($nat.description) {$n | Add-Member -Type NoteProperty -Name Description -Value $nat.description}
+		else {$n | Add-Member -Type NoteProperty -Name Description -Value $null}
 		
 		### Connect to NSX Manager via API to pull the Edge Node's Interfaces
 		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
@@ -406,13 +406,13 @@ function Get-NSXEdgeNATs {
 		foreach ($vnic in $rxml.edge.vnics.vnic)
 			{
 			$number = $vnic.label.Split("_")[1]
-			if ($number -eq $nat.vnic) {$n.AppliedOn = $vnic.name}
+			if ($number -eq $nat.vnic) {$n | Add-Member -Type NoteProperty -Name AppliedOn -Value $vnic.name}
 			}
 				
-		$global:nreport += $n
+		$nreport += $n
 		$count ++
 		}
-	$global:nreport | ft -autosize
+	$nreport 
 
 	} # End of process
 } # End of function
