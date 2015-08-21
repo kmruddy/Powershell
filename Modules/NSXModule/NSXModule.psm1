@@ -141,6 +141,7 @@ function Get-NSXEdges {
 		$e | Add-Member -Type NoteProperty -Name Size -Value $edge.appliancesSummary.applianceSize
 		$ereport += $e
 		}
+	$ereport | % { $_.PSObject.TypeNames.Insert(0,"NSX.Edges") }
 	return $ereport
 
 	} # End of process
@@ -222,6 +223,7 @@ function Get-NSXEdgeInterfaces {
 		else {$v | Add-Member -Type NoteProperty -Name Status -Value "Not Found"}
 		$vreport += $v
 		}
+	$vreport | % { $_.PSObject.TypeNames.Insert(0,"NSX.EInterfaces") }
 	$vreport
 
 	} # End of process
@@ -288,11 +290,8 @@ function Get-NSXEdgeUplinks {
 	$ureport = @()
 	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
 		{
-		$u = New-Object System.Object
 		$Edgeid = $edge.id
-		$u | Add-Member -Type NoteProperty -Name EdgeID -Value $Edgeid
-		$u | Add-Member -Type NoteProperty -Name EdgeName -Value $edge.name
-		
+				
 		### Connect to NSX Manager via API to pull the Edge Node's Uplinks
 		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
 		$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
@@ -302,6 +301,9 @@ function Get-NSXEdgeUplinks {
 			{
 			if ($vnic.type -eq "uplink") 
 				{
+				$u = New-Object System.Object
+				$u | Add-Member -Type NoteProperty -Name EdgeID -Value $Edgeid
+				$u | Add-Member -Type NoteProperty -Name EdgeName -Value $edge.name
 				$u | Add-Member -Type NoteProperty -Name Number -Value $vnic.label.Split("_")[1]
 				$u | Add-Member -Type NoteProperty -Name Name -Value $vnic.name
 				$u | Add-Member -Type NoteProperty -Name IP -Value $vnic.addressGroups.addressGroup.primaryAddress
@@ -313,6 +315,7 @@ function Get-NSXEdgeUplinks {
 						
 			}
 		}
+	$ureport | % { $_.PSObject.TypeNames.Insert(0,"NSX.EUplinks") }
 	$ureport
 
 	} # End of process
@@ -413,6 +416,7 @@ function Get-NSXEdgeNATs {
 		$nreport += $n
 		$count ++
 		}
+	$nreport | % { $_.PSObject.TypeNames.Insert(0,"NSX.ENATs") }
 	$nreport 
 
 	} # End of process
