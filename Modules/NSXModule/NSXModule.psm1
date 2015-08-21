@@ -421,3 +421,206 @@ function Get-NSXEdgeNATs {
 
 	} # End of process
 } # End of function
+
+function Get-NSXEdgeFeatures {
+
+<#  
+.SYNOPSIS  Gathers NSX Edge Feature details from all nodes within NSX Manager
+.DESCRIPTION Will inventory all of your Edge Nodes' Features from NSX Manager
+.NOTES  Author:  Kyle Ruddy, @RuddyVCP, thatcouldbeaproblem.com
+	Binding, SSL and Authentication sections sourced from Chris Wahl's github repo: https://github.com/WahlNetwork/powershell-scripts/blob/master/VMware%20NSX/Get-NSXController.ps1
+.PARAMETER NSXManager
+	The FQDN or IP of your NSX Manager
+.PARAMETER Username
+	The username to connect with. Defaults to admin if nothing is provided.
+.PARAMETER Password
+	The password to connect with
+.PARAMETER EdgeID
+	The Edge Node ID to pull information from
+.EXAMPLE
+	PS> Get-NSXEdgeFeatures -NSXManager nsxmgr.fqdn -Username admin -Password password
+#>
+
+[CmdletBinding()] 
+	param(
+		[Parameter(Mandatory=$true,Position=0)]
+		[String]$NSXManager,
+		[Parameter(Mandatory=$false,Position=1)]
+		[String]$Username = "admin",
+		[Parameter(Mandatory=$true)]
+		[String]$Password
+  	)
+
+	Process {
+
+	if (!("trustallcertspolicy" -as [type])) {
+	### Ignore TLS/SSL errors	
+	add-type @"
+	    using System.Net;
+	    using System.Security.Cryptography.X509Certificates;
+	    public class TrustAllCertsPolicy : ICertificatePolicy {
+	        public bool CheckValidationResult(
+	            ServicePoint srvPoint, X509Certificate certificate,
+	            WebRequest request, int certificateProblem) {
+	            return true;
+	        }
+	    }
+"@
+	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
+
+	### Create authorization string and store in $head
+	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
+	$head = @{"Authorization"="Basic $auth"}
+
+	### Connect to NSX Manager via API
+	$Request = "https://$NSXManager/api/4.0/edges/"
+	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
+	[xml]$rxml = $r.Content
+	
+	### Return the NSX Edge Nodes' Uplinks
+	$freport = @()
+	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+		{
+		$Edgeid = $edge.id
+				
+		### Connect to NSX Manager via API to pull the Edge Node's Uplinks
+		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
+		$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+		[xml]$rxml = $r.Content
+		
+		foreach ($feature in $rxml.edge.features)
+				{
+				$f = New-Object System.Object
+				$f | Add-Member -Type NoteProperty -Name EdgeID -Value $Edgeid
+				$f | Add-Member -Type NoteProperty -Name EdgeName -Value $edge.name
+				$f | Add-Member -Type NoteProperty -Name LoadBalancer -Value $feature.loadBalancer.enabled
+				$f | Add-Member -Type NoteProperty -Name Routing -Value $feature.routing.enabled
+				$f | Add-Member -Type NoteProperty -Name IPsecVPN -Value $feature.ipsec.enabled
+				$f | Add-Member -Type NoteProperty -Name L2VPN -Value $feature.l2Vpn.enabled
+				$f | Add-Member -Type NoteProperty -Name Syslog -Value $feature.syslog.enabled
+				$f | Add-Member -Type NoteProperty -Name Firewall -Value $feature.firewall.enabled
+				$f | Add-Member -Type NoteProperty -Name DHCP -Value $feature.dhcp.enabled
+				$f | Add-Member -Type NoteProperty -Name DNS -Value $feature.dns.enabled
+				$f | Add-Member -Type NoteProperty -Name HA -Value $feature.highAvailability.enabled
+				$f | Add-Member -Type NoteProperty -Name NAT -Value $feature.nat.enabled
+				$f | Add-Member -Type NoteProperty -Name SSLVPN -Value $feature.sslvpnConfig.enabled
+				$freport += $f
+				}
+		}
+	$freport | % { $_.PSObject.TypeNames.Insert(0,"NSX.EFeatures") }
+	$freport
+
+	} # End of process
+} # End of function
+
+function Get-NSXEdgeRoutingOverview {
+
+<#  
+.SYNOPSIS  Gathers NSX Edge Routing Overview details from all nodes within NSX Manager
+.DESCRIPTION Will inventory all of your Edge Nodes' Routing Overview details from NSX Manager
+.NOTES  Author:  Kyle Ruddy, @RuddyVCP, thatcouldbeaproblem.com
+	Binding, SSL and Authentication sections sourced from Chris Wahl's github repo: https://github.com/WahlNetwork/powershell-scripts/blob/master/VMware%20NSX/Get-NSXController.ps1
+.PARAMETER NSXManager
+	The FQDN or IP of your NSX Manager
+.PARAMETER Username
+	The username to connect with. Defaults to admin if nothing is provided.
+.PARAMETER Password
+	The password to connect with
+.PARAMETER EdgeID
+	The Edge Node ID to pull information from
+.EXAMPLE
+	PS> Get-NSXEdgeRoutingOverview -NSXManager nsxmgr.fqdn -Username admin -Password password
+#>
+
+[CmdletBinding()] 
+	param(
+		[Parameter(Mandatory=$true,Position=0)]
+		[String]$NSXManager,
+		[Parameter(Mandatory=$false,Position=1)]
+		[String]$Username = "admin",
+		[Parameter(Mandatory=$true)]
+		[String]$Password
+  	)
+
+	Process {
+
+	if (!("trustallcertspolicy" -as [type])) {
+	### Ignore TLS/SSL errors	
+	add-type @"
+	    using System.Net;
+	    using System.Security.Cryptography.X509Certificates;
+	    public class TrustAllCertsPolicy : ICertificatePolicy {
+	        public bool CheckValidationResult(
+	            ServicePoint srvPoint, X509Certificate certificate,
+	            WebRequest request, int certificateProblem) {
+	            return true;
+	        }
+	    }
+"@
+	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
+
+	### Create authorization string and store in $head
+	$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password))
+	$head = @{"Authorization"="Basic $auth"}
+
+	### Connect to NSX Manager via API
+	$Request = "https://$NSXManager/api/4.0/edges/"
+	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
+	[xml]$rxml = $r.Content
+	
+	### Return the NSX Edge Nodes' HA Details
+	$roreport = @()
+	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+		{
+		$Edgeid = $edge.id
+				
+		### Connect to NSX Manager via API to pull the Edge Nodes' HA Details
+		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid/routing/config"
+		$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+		[xml]$rxml = $r.Content
+		
+		foreach ($routing in $rxml.routing)
+				{
+				$ro = New-Object System.Object
+				$ro | Add-Member -Type NoteProperty -Name EdgeID -Value $Edgeid
+				$ro | Add-Member -Type NoteProperty -Name EdgeName -Value $edge.name
+				$ro | Add-Member -Type NoteProperty -Name Status -Value $routing.enabled
+				$ro | Add-Member -Type NoteProperty -Name ECMP -Value $routing.routingGlobalConfig.ecmp
+				
+				### Connect to NSX Manager via API to pull the Edge Node's Interfaces
+				$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
+				$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+				[xml]$rxml = $r.Content
+				
+				foreach ($vnic in $rxml.edge.vnics.vnic)
+					{
+					$number = $vnic.label.Split("_")[1]
+					if ($number -eq $routing.staticRouting.defaultRoute.vnic) {$ro | Add-Member -Type NoteProperty -Name GWvNIC -Value $vnic.name}
+					}
+				
+				$ro | Add-Member -Type NoteProperty -Name GWIP -Value $routing.staticRouting.defaultRoute.gatewayAddress
+				$ro | Add-Member -Type NoteProperty -Name GWMTU -Value $routing.staticRouting.defaultRoute.mtu
+				if ($routing.staticRouting.defaultRoute.description) {$ro | Add-Member -Type NoteProperty -Name GWDescription -Value $routing.staticRouting.defaultRoute.description}
+				else {$ro | Add-Member -Type NoteProperty -Name GWDescription -Value ""}
+				$ro | Add-Member -Type NoteProperty -Name RouterID -Value $routing.routingGlobalConfig.routerId
+				if ($routing.ospf.enabled) {$ro | Add-Member -Type NoteProperty -Name OSPF -Value $routing.ospf.enabled}
+				else {$ro | Add-Member -Type NoteProperty -Name OSPF -Value $false}
+				if ($routing.bgp.enabled) {$ro | Add-Member -Type NoteProperty -Name BGP -Value $routing.bgp.enabled}
+				else {$ro | Add-Member -Type NoteProperty -Name BGP -Value $false}
+				if ($routing.isis.enabled) {$ro | Add-Member -Type NoteProperty -Name ISIS -Value $routing.isis.enabled}
+				else {$ro | Add-Member -Type NoteProperty -Name ISIS -Value $false}
+				$ro | Add-Member -Type NoteProperty -Name Logging -Value $routing.routingGlobalConfig.logging.enable
+				if ($routing.routingGlobalConfig.logging.enable -eq $true) {$ro | Add-Member -Type NoteProperty -Name LogLevel -Value $routing.routingGlobalConfig.logging.logLevel}
+				else {$ro | Add-Member -Type NoteProperty -Name LogLevel -Value ""}
+				$roreport += $ro
+				}
+		}
+	$roreport | % { $_.PSObject.TypeNames.Insert(0,"NSX.ERoutingOverview") }
+	$roreport
+
+	} # End of process
+} # End of function
