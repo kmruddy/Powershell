@@ -152,7 +152,7 @@ function Get-NSXEdgeInterfaces {
 
 <#  
 .SYNOPSIS  Gathers NSX Edge Node's Interface details from NSX Manager
-.DESCRIPTION Will inventory all of your Edge Node's Interfaces from NSX Manager
+.DESCRIPTION Will inventory the selected Edge Node's Interfaces from NSX Manager
 .NOTES  Author:  Kyle Ruddy, @RuddyVCP, thatcouldbeaproblem.com
 	Binding, SSL and Authentication sections sourced from Chris Wahl's github repo: https://github.com/WahlNetwork/powershell-scripts/blob/master/VMware%20NSX/Get-NSXController.ps1
 .PARAMETER NSXManager
@@ -242,8 +242,6 @@ function Get-NSXEdgeUplinks {
 	The username to connect with. Defaults to admin if nothing is provided.
 .PARAMETER Password
 	The password to connect with
-.PARAMETER EdgeID
-	The Edge Node ID to pull information from
 .EXAMPLE
 	PS> Get-NSXEdgeUplinks -NSXManager nsxmgr.fqdn -Username admin -Password password
 #>
@@ -325,7 +323,7 @@ function Get-NSXEdgeNATs {
 
 <#  
 .SYNOPSIS  Gathers NSX Edge Node NAT details from NSX Manager
-.DESCRIPTION Will inventory all of your Edge Node NATs from NSX Manager
+.DESCRIPTION Will inventory all of your Edge Node's NATs from NSX Manager
 .NOTES  Author:  Kyle Ruddy, @RuddyVCP, thatcouldbeaproblem.com
 	Binding, SSL and Authentication sections sourced from Chris Wahl's github repo: https://github.com/WahlNetwork/powershell-scripts/blob/master/VMware%20NSX/Get-NSXController.ps1
 .PARAMETER NSXManager
@@ -380,7 +378,7 @@ function Get-NSXEdgeNATs {
 	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
 	[xml]$rxml = $r.Content
 	
-	### Return the NSX Controllers
+	### Return the NSX Edge's NAT Config
 	$nreport = @()
 	$count = 1
 	foreach ($nat in $rxml.nat.natRules.natRule)
@@ -479,13 +477,13 @@ function Get-NSXEdgeFeatures {
 	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
 	[xml]$rxml = $r.Content
 	
-	### Return the NSX Edge Nodes' Uplinks
+	### Return the NSX Edges
 	$freport = @()
 	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$Edgeid = $edge.id
 				
-		### Connect to NSX Manager via API to pull the Edge Node's Uplinks
+		### Connect to NSX Manager via API to pull the Edge Node's Features
 		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
 		$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 		[xml]$rxml = $r.Content
@@ -572,13 +570,13 @@ function Get-NSXEdgeRoutingOverview {
 	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
 	[xml]$rxml = $r.Content
 	
-	### Return the NSX Edge Nodes' HA Details
+	### Return the NSX Edge Nodes
 	$roreport = @()
 	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$Edgeid = $edge.id
 				
-		### Connect to NSX Manager via API to pull the Edge Nodes' HA Details
+		### Connect to NSX Manager via API to pull the Edge Nodes' Routing Config
 		$Request = "https://$NSXManager/api/4.0/edges/$Edgeid/routing/config"
 		$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 		[xml]$rxml = $r.Content
