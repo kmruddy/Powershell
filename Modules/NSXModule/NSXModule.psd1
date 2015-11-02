@@ -18,7 +18,7 @@ ModuleVersion = '1.1'
 GUID = 'b56ca979-d177-497f-8668-54f89d8974c1'
 
 # Author of this module
-Author = 'Kyle Ruddy, @RuddyVCP, thatcouldbeaproblem.com'
+Author = 'Kyle Ruddy, @kmruddy, thatcouldbeaproblem.com'
 
 # Company or vendor of this module
 CompanyName = ''
