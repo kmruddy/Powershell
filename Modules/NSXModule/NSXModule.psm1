@@ -55,13 +55,11 @@ function Get-NSXController {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/2.0/vdn/controller"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
-	
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+		
 	### Return the NSX Controllers
 	$creport = @()
-	foreach ($controller in $rxml.controllers.controller)
+	foreach ($controller in $r.controllers.controller)
 		{
 		$c = New-Object System.Object
 		$c | Add-Member -Type NoteProperty -Name Name -Value $controller.id
@@ -137,13 +135,11 @@ function Get-NSXEdges {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edge Nodes
 	$ereport = @()
-	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+	foreach ($edge in $r.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$e = New-Object System.Object
 		$e | Add-Member -Type NoteProperty -Name ID -Value $edge.id
@@ -225,13 +221,11 @@ function Get-NSXEdgeInterfaces {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/$Edgeid"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edge Node's Interfaces
 	$vreport = @()
-	foreach ($vnic in $rxml.edge.vnics.vnic)
+	foreach ($vnic in $r.edge.vnics.vnic)
 		{
 		$v = New-Object System.Object
 		$v | Add-Member -Type NoteProperty -Name Number -Value $vnic.label.Split("_")[1]
@@ -307,13 +301,11 @@ function Get-NSXEdgeUplinks {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edge Nodes' Uplinks
 	$ureport = @()
-	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+	foreach ($edge in $r.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$Edgeid = $edge.id
 				
@@ -409,14 +401,12 @@ function Get-NSXEdgeNATs {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/$Edgeid/nat/config"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edge's NAT Config
 	$nreport = @()
 	$count = 1
-	foreach ($nat in $rxml.nat.natRules.natRule)
+	foreach ($nat in $r.nat.natRules.natRule)
 		{
 		$n = New-Object System.Object
 		$n | Add-Member -Type NoteProperty -Name Order -Value $count
@@ -514,13 +504,11 @@ function Get-NSXEdgeFeatures {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edges
 	$freport = @()
-	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+	foreach ($edge in $r.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$Edgeid = $edge.id
 				
@@ -612,13 +600,11 @@ function Get-NSXEdgeRoutingOverview {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/4.0/edges/"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	
 	### Return the NSX Edge Nodes
 	$roreport = @()
-	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+	foreach ($edge in $r.pagedEdgeList.edgePage.edgeSummary)
 		{
 		$Edgeid = $edge.id
 				
@@ -726,16 +712,14 @@ function Get-NSXControllerUpgrade {
 
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/2.0/vdn/controller"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-	[xml]$rxml = $r.Content
+	$r = Invoke-RestMethod -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 
     $Request = "https://$NSXManager/api/2.0/vdn/controller/upgrade-available"
     $u = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:Stop -Method Get
 	
 	### Return the NSX Controllers
 	$creport = @()
-	foreach ($controller in $rxml.controllers.controller)
+	foreach ($controller in $r.controllers.controller)
 		{
 		$c = New-Object System.Object
 		$c | Add-Member -Type NoteProperty -Name Name -Value $controller.id
@@ -811,8 +795,7 @@ function Get-NSXManager {
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/1.0/appliance-management/summary/system"
 	$r = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:Stop -Method Get
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-
+	
 	### Return the NSX Manager Info
 	$mreport = New-Object System.Object
 	$mreport | Add-Member -Type NoteProperty -Name Name -Value $r.hostName
@@ -892,8 +875,7 @@ function Restart-NSXManager {
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/1.0/appliance-management/system/restart"
 	$r = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:Stop -Method Post
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully and rebooting now.}
-
+	
     }
 
 	} # End of process
@@ -958,8 +940,7 @@ function Get-NSXManagerComponents {
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/1.0/appliance-management/components"
 	$r = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:Stop -Method Get
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-
+	
 	### Return the NSX Manager Info
     $creport = @()
     foreach ($comp in $r.Components) {
@@ -1044,8 +1025,7 @@ function Get-NSXManagerSSH {
 	### Connect to NSX Manager via API
 	$Request = "https://$NSXManager/api/1.0/appliance-management/components/component/SSH"
 	$r = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:Stop -Method Get
-	if ($r.StatusCode -eq "200") {Write-Host -BackgroundColor:Black -ForegroundColor:Green Status: Connected to $NSXManager successfully.}
-
+	
 	### Return the NSX Manager Info
     $creport = @()
     foreach ($comp in $r) {
@@ -1242,18 +1222,17 @@ function Update-NSXEdge {
 	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
 	if ($r.StatusCode -eq "200") {
 	### Connect to NSX Manager via API
-	$Request = ("https://" + $NSXManager + "/api/3.0/edges/" + $Edgeid + "?action=upgrade")
-	$r = $r = Invoke-RestMethod -Uri $Request -Headers $head -contenttype "application/xml" -ErrorAction:SilentlyContinue -Method POST
+	$erequest = ("https://" + $NSXManager + "/api/3.0/edges/" + $Edgeid + "?action=upgrade")
+	$e = Invoke-RestMethod -Uri $erequest -Headers $head -contenttype "application/xml" -ErrorAction:SilentlyContinue -Method POST
     
     Start-Sleep -Seconds 5
     	
 	$Request = "https://$NSXManager/api/4.0/edges/"
-	$r = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
-	[xml]$rxml = $r.Content
-	
+	$c = Invoke-WebRequest -Uri $Request -Headers $head -ContentType "application/xml" -ErrorAction:Stop
+		
 	### Return the NSX Edge Nodes
 	$ereport = @()
-	foreach ($edge in $rxml.pagedEdgeList.edgePage.edgeSummary)
+	foreach ($edge in $c.pagedEdgeList.edgePage.edgeSummary)
 		{
         if ($edge.id -eq $Edgeid) {
 		$e = New-Object System.Object
