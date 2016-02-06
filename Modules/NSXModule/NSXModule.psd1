@@ -12,7 +12,7 @@
 RootModule = 'NSXModule'
 
 # Version number of this module.
-ModuleVersion = '1.1'
+ModuleVersion = '1.2'
 
 # ID used to uniquely identify this module
 GUID = 'b56ca979-d177-497f-8668-54f89d8974c1'
